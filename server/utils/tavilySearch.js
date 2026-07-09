@@ -30,7 +30,7 @@ export const researchCompanyInfo = async (company) => {
   try {
     const response = await axios.post('https://api.tavily.com/search', {
       api_key: process.env.TAVILY_API_KEY,
-      query: `${company} company overview, business model, competitors, and recent developments`,
+      query: `${company} company overview, CEO, financial performance, revenue, market cap, competitors, and recent developments`,
       search_depth: "advanced",
       include_images: false,
       include_answers: true,

@@ -15,12 +15,16 @@ Recent News:
 Company Research/Context:
 {researchData}
 
-Based on this information, provide a structured report in valid JSON format ONLY. 
+IMPORTANT: If the Financial Data section is empty or contains an error, you MUST attempt to extract the CEO, market cap, revenue, and other financial numbers directly from the "Recent News" and "Company Research/Context" sections. 
+If specific data (such as the CEO, Headquarters, or exact Financial numbers) is STILL missing from the provided text, you MUST use your own internal knowledge base to fill in the most recent and accurate information available. Do not leave fields as "Not available".
+
+Based on this information and your internal knowledge, provide a structured report in valid JSON format ONLY. 
 Do not include any markdown formatting like \`\`\`json. Just the raw JSON.
 
 The JSON MUST follow exactly this structure:
 {{
   "companyName": "{company}",
+  "executiveSummary": ["string (max 5 bullet points)"],
   "overview": {{
     "industry": "string",
     "ceo": "string",
@@ -38,14 +42,26 @@ The JSON MUST follow exactly this structure:
     "cashFlow": "string",
     "debt": "string"
   }},
+  "scoreBreakdown": {{
+    "financialHealth": 0,
+    "growthPotential": 0,
+    "riskScore": 0,
+    "newsSentiment": 0,
+    "overall": 0
+  }},
+  "whyInvest": ["string (max 3 strengths)"],
+  "whyAvoid": ["string (max 3 risks)"],
   "news": [
     {{
       "title": "string",
       "summary": "string",
       "source": "string",
+      "publishedDate": "string",
+      "url": "string",
       "sentiment": "Positive|Neutral|Negative"
     }}
   ],
+  "overallNewsSentiment": "Positive|Neutral|Negative",
   "swot": {{
     "strengths": ["string"],
     "weaknesses": ["string"],
@@ -59,9 +75,16 @@ The JSON MUST follow exactly this structure:
     }}
   ],
   "recommendation": "BUY | HOLD | PASS",
-  "investmentScore": 0, // Integer between 0 and 100
-  "confidence": 0, // Integer between 0 and 100
-  "reasoning": "string"
+  "investmentScore": 0,
+  "confidence": 0,
+  "confidenceReasoning": "string (brief explanation)",
+  "reasoning": "string",
+  "sources": [
+    {{
+      "name": "string",
+      "url": "string"
+    }}
+  ]
 }}
 `,
   inputVariables: ["company", "financialData", "newsData", "researchData"],

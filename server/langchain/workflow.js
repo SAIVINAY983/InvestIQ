@@ -24,7 +24,7 @@ export const runAnalysisWorkflow = async (company) => {
   const model = new ChatGoogleGenerativeAI({
     model: "gemini-2.5-flash",
     apiKey: process.env.GOOGLE_API_KEY,
-    maxOutputTokens: 2048,
+    maxOutputTokens: 8192,
     temperature: 0.2,
   });
 
@@ -46,14 +46,30 @@ export const runAnalysisWorkflow = async (company) => {
     return JSON.parse(cleanedText);
   } catch (error) {
     console.error("🚨 Gemini API Error:", error.message);
-    console.warn("Returning fallback mock data because the Gemini API key is invalid or restricted.");
-    return getMockReport(company);
+    return {
+      "companyName": company,
+      "executiveSummary": ["Error generating report."],
+      "recommendation": "ERROR",
+      "reasoning": "The API failed with error: " + error.message,
+      "scoreBreakdown": { "financialHealth": 0, "growthPotential": 0, "riskScore": 0, "newsSentiment": 0, "overall": 0 },
+      "whyInvest": [],
+      "whyAvoid": [],
+      "overallNewsSentiment": "Neutral",
+      "sources": [],
+      "confidenceReasoning": "API Error",
+      "overview": {}, "financials": {}, "news": [], "swot": {strengths:[], weaknesses:[], opportunities:[], threats:[]}, "risks": []
+    };
   }
 };
 
 function getMockReport(company) {
   return {
     "companyName": company,
+    "executiveSummary": [
+      `${company} is a leading technology company with strong brand recognition.`,
+      "Q3 deliveries beat expectations, signaling growth.",
+      "Increasing competition remains a primary risk."
+    ],
     "overview": {
       "industry": "Technology & Consumer Electronics",
       "ceo": "Tim Cook (or Current CEO)",
@@ -71,17 +87,43 @@ function getMockReport(company) {
       "cashFlow": "$13.3B",
       "debt": "$5.7B"
     },
+    "scoreBreakdown": {
+      "financialHealth": 90,
+      "growthPotential": 80,
+      "riskScore": 75,
+      "newsSentiment": 85,
+      "overall": 85
+    },
+    "whyInvest": [
+      "Consistent revenue growth.",
+      "Dominant market position.",
+      "Strong consumer brand loyalty."
+    ],
+    "whyAvoid": [
+      "High valuation multiples.",
+      "Supply chain vulnerabilities.",
+      "Increasing regulatory scrutiny."
+    ],
+    "overallNewsSentiment": "Positive",
+    "sources": [
+      { "name": "Yahoo Finance", "url": "https://finance.yahoo.com" },
+      { "name": "CNBC", "url": "https://cnbc.com" }
+    ],
     "news": [
       {
         "title": `${company} Q3 Deliveries Beat Expectations`,
         "summary": `${company} reported higher than expected deliveries in the third quarter...`,
         "source": "CNBC",
+        "publishedDate": "2026-07-09",
+        "url": "https://cnbc.com/news",
         "sentiment": "Positive"
       },
       {
         "title": `New ${company} Factory Announced`,
         "summary": `${company} plans to build a new factory to expand production.`,
         "source": "Reuters",
+        "publishedDate": "2026-07-08",
+        "url": "https://reuters.com/news",
         "sentiment": "Positive"
       }
     ],
@@ -100,6 +142,7 @@ function getMockReport(company) {
     "recommendation": "BUY",
     "investmentScore": 85,
     "confidence": 90,
+    "confidenceReasoning": "High confidence due to consistent financial performance and strong market position.",
     "reasoning": `${company} remains a market leader with strong growth prospects and high margins, despite increasing competition.`
   };
 }

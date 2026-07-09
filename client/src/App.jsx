@@ -5,20 +5,44 @@ import ResultsDashboard from './pages/ResultsDashboard.jsx';
 import { analyzeCompany } from './services/api.js';
 
 function App() {
-  const [appState, setAppState] = useState('landing'); // 'landing', 'loading', 'results'
+  const [appState, setAppState] = useState('landing');
   const [reportData, setReportData] = useState(null);
   const [error, setError] = useState(null);
+  const [cache, setCache] = useState({});
 
   const handleAnalyze = async (companyName) => {
+    const normalizedName = companyName.toLowerCase().trim();
+    if (cache[normalizedName]) {
+      setReportData(cache[normalizedName]);
+      setAppState('results');
+      return;
+    }
+
     setAppState('loading');
     setError(null);
     try {
       const data = await analyzeCompany(companyName);
+      
+      if (data.recommendation === 'ERROR') {
+        throw new Error(data.reasoning);
+      }
+
+      setCache(prev => ({ ...prev, [normalizedName]: data }));
       setReportData(data);
       setAppState('results');
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || 'Failed to analyze company. Please try again.');
+      
+      let errorMessage = err.message || err.response?.data?.error || 'Failed to analyze company. Please try again.';
+      
+      // Clean up the ugly Gemini API 429 quota error message
+      if (errorMessage.includes('429') || errorMessage.includes('quota')) {
+        const timeMatch = errorMessage.match(/retry in (.*?)\./);
+        const waitTime = timeMatch ? timeMatch[1] : 'a minute';
+        errorMessage = `Google AI Rate Limit Reached! You are making requests too quickly. Please wait ${waitTime} and try again.`;
+      }
+      
+      setError(errorMessage);
       setAppState('landing');
     }
   };

@@ -1,12 +1,27 @@
-import { useState } from 'react';
-import { Search, TrendingUp, BarChart2, ShieldAlert } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, TrendingUp, BarChart2, ShieldAlert, Clock } from 'lucide-react';
 
 export default function LandingPage({ onAnalyze, error }) {
   const [company, setCompany] = useState('');
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('investiq_history');
+    if (saved) {
+      setHistory(JSON.parse(saved));
+    }
+  }, []);
+
+  const saveToHistory = (term) => {
+    const updated = [term, ...history.filter(h => h.toLowerCase() !== term.toLowerCase())].slice(0, 5);
+    setHistory(updated);
+    localStorage.setItem('investiq_history', JSON.stringify(updated));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (company.trim()) {
+      saveToHistory(company.trim());
       onAnalyze(company.trim());
     }
   };
@@ -54,6 +69,28 @@ export default function LandingPage({ onAnalyze, error }) {
           </div>
           {error && (
             <p className="text-red-400 mt-3 text-sm">{error}</p>
+          )}
+
+          {history.length > 0 && (
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              <span className="text-sm text-gray-500 flex items-center gap-1">
+                <Clock size={14} /> Recent:
+              </span>
+              {history.map((h, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    setCompany(h);
+                    saveToHistory(h);
+                    onAnalyze(h);
+                  }}
+                  className="px-3 py-1 text-sm bg-gray-800/50 hover:bg-gray-700 border border-gray-700 rounded-full transition-colors"
+                >
+                  {h}
+                </button>
+              ))}
+            </div>
           )}
         </form>
 
