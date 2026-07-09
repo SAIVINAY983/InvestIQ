@@ -2,13 +2,26 @@ import { useState } from 'react';
 import LandingPage from './pages/LandingPage.jsx';
 import LoadingScreen from './pages/LoadingScreen.jsx';
 import ResultsDashboard from './pages/ResultsDashboard.jsx';
-import { analyzeCompany } from './services/api.js';
+import ComparisonDashboard from './pages/ComparisonDashboard.jsx';
+import { analyzeCompany, compareCompanies } from './services/api.js';
 
 function App() {
   const [appState, setAppState] = useState('landing');
   const [reportData, setReportData] = useState(null);
+  const [compareData, setCompareData] = useState(null);
   const [error, setError] = useState(null);
   const [cache, setCache] = useState({});
+
+  const handleError = (err) => {
+    let errorMessage = err.message || err.response?.data?.error || 'Failed to process request. Please try again.';
+    if (errorMessage.includes('429') || errorMessage.includes('quota')) {
+      const timeMatch = errorMessage.match(/retry in (.*?)\./);
+      const waitTime = timeMatch ? timeMatch[1] : 'a minute';
+      errorMessage = `Google AI Rate Limit Reached! You are making requests too quickly. Please wait ${waitTime} and try again.`;
+    }
+    setError(errorMessage);
+    setAppState('landing');
+  };
 
   const handleAnalyze = async (companyName) => {
     const normalizedName = companyName.toLowerCase().trim();
@@ -22,34 +35,46 @@ function App() {
     setError(null);
     try {
       const data = await analyzeCompany(companyName);
-      
-      if (data.recommendation === 'ERROR') {
-        throw new Error(data.reasoning);
-      }
+      if (data.recommendation === 'ERROR') throw new Error(data.reasoning);
 
       setCache(prev => ({ ...prev, [normalizedName]: data }));
       setReportData(data);
       setAppState('results');
     } catch (err) {
       console.error(err);
-      
-      let errorMessage = err.message || err.response?.data?.error || 'Failed to analyze company. Please try again.';
-      
-      // Clean up the ugly Gemini API 429 quota error message
-      if (errorMessage.includes('429') || errorMessage.includes('quota')) {
-        const timeMatch = errorMessage.match(/retry in (.*?)\./);
-        const waitTime = timeMatch ? timeMatch[1] : 'a minute';
-        errorMessage = `Google AI Rate Limit Reached! You are making requests too quickly. Please wait ${waitTime} and try again.`;
+      handleError(err);
+    }
+  };
+
+  const handleCompare = async (companyA, companyB) => {
+    const key = `${companyA.toLowerCase().trim()}_vs_${companyB.toLowerCase().trim()}`;
+    if (cache[key]) {
+      setCompareData(cache[key]);
+      setAppState('compare_results');
+      return;
+    }
+
+    setAppState('loading');
+    setError(null);
+    try {
+      const data = await compareCompanies(companyA, companyB);
+      if (data.reportA?.recommendation === 'ERROR' || data.reportB?.recommendation === 'ERROR') {
+        throw new Error("Failed to analyze one or both companies.");
       }
-      
-      setError(errorMessage);
-      setAppState('landing');
+
+      setCache(prev => ({ ...prev, [key]: data }));
+      setCompareData(data);
+      setAppState('compare_results');
+    } catch (err) {
+      console.error(err);
+      handleError(err);
     }
   };
 
   const handleReset = () => {
     setAppState('landing');
     setReportData(null);
+    setCompareData(null);
     setError(null);
   };
 
@@ -71,13 +96,16 @@ function App() {
 
       <main className="flex-1 flex flex-col">
         {appState === 'landing' && (
-          <LandingPage onAnalyze={handleAnalyze} error={error} />
+          <LandingPage onAnalyze={handleAnalyze} onCompare={handleCompare} error={error} />
         )}
         {appState === 'loading' && (
           <LoadingScreen />
         )}
         {appState === 'results' && reportData && (
           <ResultsDashboard data={reportData} onNewSearch={handleReset} />
+        )}
+        {appState === 'compare_results' && compareData && (
+          <ComparisonDashboard data={compareData} onNewSearch={handleReset} />
         )}
       </main>
       

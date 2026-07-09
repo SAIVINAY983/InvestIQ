@@ -15,16 +15,19 @@ Recent News:
 Company Research/Context:
 {researchData}
 
-IMPORTANT: If the Financial Data section is empty or contains an error, you MUST attempt to extract the CEO, market cap, revenue, and other financial numbers directly from the "Recent News" and "Company Research/Context" sections. 
-If specific data (such as the CEO, Headquarters, or exact Financial numbers) is STILL missing from the provided text, you MUST use your own internal knowledge base to fill in the most recent and accurate information available. Do not leave fields as "Not available".
-
-Based on this information and your internal knowledge, provide a structured report in valid JSON format ONLY. 
-Do not include any markdown formatting like \`\`\`json. Just the raw JSON.
+IMPORTANT INSTRUCTIONS: 
+1. If the Financial Data section is empty or contains an error, attempt to extract the CEO, market cap, revenue, and other financial numbers directly from the "Recent News" and "Company Research/Context" sections. 
+2. If specific data is missing, use your internal knowledge base to fill in the most recent information.
+3. Automatically detect if the company is Public or Private based on available stock data and context.
+4. Provide detailed reasoning for every score, confident assessments, and a clear investment thesis.
+5. Create a valid JSON output matching the EXACT structure below. Do not include markdown formatting like \`\`\`json.
 
 The JSON MUST follow exactly this structure:
 {{
   "companyName": "{company}",
+  "isPublic": true,
   "executiveSummary": ["string (max 5 bullet points)"],
+  "investmentThesis": "string (3-5 lines concise summary of why to invest or not)",
   "overview": {{
     "industry": "string",
     "ceo": "string",
@@ -49,40 +52,61 @@ The JSON MUST follow exactly this structure:
     "newsSentiment": 0,
     "overall": 0
   }},
+  "scoreReasoning": {{
+    "financialHealth": ["string (bullet point reasons)"],
+    "growthPotential": ["string"],
+    "riskScore": ["string"],
+    "newsSentiment": ["string"]
+  }},
+  "bullCase": ["string (max 3 points)"],
+  "bearCase": ["string (max 3 points)"],
   "whyInvest": ["string (max 3 strengths)"],
   "whyAvoid": ["string (max 3 risks)"],
+  "positiveCatalysts": ["string (max 3)"],
+  "negativeCatalysts": ["string (max 3)"],
+  "recommendationScenarios": {{
+    "downgradeScenario": ["string (max 2 points)"],
+    "upgradeScenario": ["string (max 2 points)"]
+  }},
   "news": [
     {{
       "title": "string",
-      "summary": "string",
+      "summary": "string (keep very brief)",
       "source": "string",
       "publishedDate": "string",
       "url": "string",
       "sentiment": "Positive|Neutral|Negative"
-    }}
+    }} // MAX 3 NEWS ITEMS
   ],
   "overallNewsSentiment": "Positive|Neutral|Negative",
   "swot": {{
-    "strengths": ["string"],
-    "weaknesses": ["string"],
-    "opportunities": ["string"],
-    "threats": ["string"]
+    "strengths": ["string (max 3)"],
+    "weaknesses": ["string (max 3)"],
+    "opportunities": ["string (max 3)"],
+    "threats": ["string (max 3)"]
   }},
   "risks": [
     {{
       "type": "Business Risk | Financial Risk | Competition | Market Risk",
-      "description": "string"
-    }}
+      "description": "string (max 1 sentence)"
+    }} // MAX 3 RISKS
   ],
+  "redFlags": ["string (max 3 serious warnings or empty array)"],
+  "portfolioSuitability": {{
+    "suitableFor": ["string (max 2)"],
+    "notSuitableFor": ["string (max 2)"]
+  }},
   "recommendation": "BUY | HOLD | PASS",
   "investmentScore": 0,
   "confidence": 0,
-  "confidenceReasoning": "string (brief explanation)",
+  "confidenceReasoning": "string (brief overall explanation)",
+  "confidenceReasons": ["string (bullet points explaining why confidence is high or low)"],
   "reasoning": "string",
   "sources": [
     {{
       "name": "string",
-      "url": "string"
+      "url": "string",
+      "reliabilityScore": 0
     }}
   ]
 }}

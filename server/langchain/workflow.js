@@ -39,8 +39,10 @@ export const runAnalysisWorkflow = async (company) => {
     });
 
     let cleanedText = responseText.trim();
-    if (cleanedText.startsWith("\`\`\`json")) {
-      cleanedText = cleanedText.replace(/^\`\`\`json/, "").replace(/\`\`\`$/, "").trim();
+    if (cleanedText.startsWith("```json")) {
+      cleanedText = cleanedText.replace(/^```json\s*/, "").replace(/\s*```$/, "").trim();
+    } else if (cleanedText.startsWith("```")) {
+      cleanedText = cleanedText.replace(/^```\s*/, "").replace(/\s*```$/, "").trim();
     }
     
     return JSON.parse(cleanedText);
@@ -48,15 +50,26 @@ export const runAnalysisWorkflow = async (company) => {
     console.error("🚨 Gemini API Error:", error.message);
     return {
       "companyName": company,
+      "isPublic": true,
       "executiveSummary": ["Error generating report."],
+      "investmentThesis": "Error generating report.",
       "recommendation": "ERROR",
       "reasoning": "The API failed with error: " + error.message,
       "scoreBreakdown": { "financialHealth": 0, "growthPotential": 0, "riskScore": 0, "newsSentiment": 0, "overall": 0 },
+      "scoreReasoning": { "financialHealth": [], "growthPotential": [], "riskScore": [], "newsSentiment": [] },
+      "bullCase": [],
+      "bearCase": [],
       "whyInvest": [],
       "whyAvoid": [],
+      "positiveCatalysts": [],
+      "negativeCatalysts": [],
+      "recommendationScenarios": { "downgradeScenario": [], "upgradeScenario": [] },
       "overallNewsSentiment": "Neutral",
       "sources": [],
       "confidenceReasoning": "API Error",
+      "confidenceReasons": [],
+      "redFlags": [],
+      "portfolioSuitability": { "suitableFor": [], "notSuitableFor": [] },
       "overview": {}, "financials": {}, "news": [], "swot": {strengths:[], weaknesses:[], opportunities:[], threats:[]}, "risks": []
     };
   }
@@ -65,11 +78,13 @@ export const runAnalysisWorkflow = async (company) => {
 function getMockReport(company) {
   return {
     "companyName": company,
+    "isPublic": true,
     "executiveSummary": [
       `${company} is a leading technology company with strong brand recognition.`,
       "Q3 deliveries beat expectations, signaling growth.",
       "Increasing competition remains a primary risk."
     ],
+    "investmentThesis": `${company} remains a financially strong IT services leader with robust margins, strategic AI investments, and consistent cash generation, making it suitable for long-term investors despite moderate growth.`,
     "overview": {
       "industry": "Technology & Consumer Electronics",
       "ceo": "Tim Cook (or Current CEO)",
@@ -94,6 +109,14 @@ function getMockReport(company) {
       "newsSentiment": 85,
       "overall": 85
     },
+    "scoreReasoning": {
+      "financialHealth": ["Strong operating margin", "Healthy cash flow", "Low debt"],
+      "growthPotential": ["AI investments", "Cloud growth", "New contracts"],
+      "riskScore": ["Competition from startups", "Regulatory scrutiny"],
+      "newsSentiment": ["Recent product announcements received well", "Positive analyst coverage"]
+    },
+    "bullCase": ["Growth Drivers in AI", "Positive Margin Expansion", "Competitive Advantages"],
+    "bearCase": ["Risks in supply chain", "Challenges in emerging markets", "Weaknesses in legacy products"],
     "whyInvest": [
       "Consistent revenue growth.",
       "Dominant market position.",
@@ -104,10 +127,16 @@ function getMockReport(company) {
       "Supply chain vulnerabilities.",
       "Increasing regulatory scrutiny."
     ],
+    "positiveCatalysts": ["AI adoption", "New enterprise deals", "Margin improvement"],
+    "negativeCatalysts": ["Competition", "Economic slowdown", "Currency fluctuations"],
+    "recommendationScenarios": {
+      "downgradeScenario": ["Revenue growth slows", "Margins decline"],
+      "upgradeScenario": ["Continuous earnings growth", "Debt decreases significantly"]
+    },
     "overallNewsSentiment": "Positive",
     "sources": [
-      { "name": "Yahoo Finance", "url": "https://finance.yahoo.com" },
-      { "name": "CNBC", "url": "https://cnbc.com" }
+      { "name": "Yahoo Finance", "url": "https://finance.yahoo.com", "reliabilityScore": 5 },
+      { "name": "CNBC", "url": "https://cnbc.com", "reliabilityScore": 4 }
     ],
     "news": [
       {
@@ -139,10 +168,20 @@ function getMockReport(company) {
         "description": "Intense competition from BYD and traditional automakers."
       }
     ],
+    "redFlags": ["High Debt", "Falling Revenue in specific sectors"],
+    "portfolioSuitability": {
+      "suitableFor": ["Long-Term Investors", "Growth Investors", "Moderate Risk Investors"],
+      "notSuitableFor": ["Dividend Investors", "Conservative Investors"]
+    },
     "recommendation": "BUY",
     "investmentScore": 85,
     "confidence": 90,
     "confidenceReasoning": "High confidence due to consistent financial performance and strong market position.",
+    "confidenceReasons": [
+      "Recent financial reports available",
+      "Multiple trusted sources found",
+      "Strong news coverage"
+    ],
     "reasoning": `${company} remains a market leader with strong growth prospects and high margins, despite increasing competition.`
   };
 }

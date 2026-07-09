@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Search, TrendingUp, BarChart2, ShieldAlert, Clock } from 'lucide-react';
+import { Search, TrendingUp, BarChart2, ShieldAlert, Clock, GitCompare } from 'lucide-react';
 
-export default function LandingPage({ onAnalyze, error }) {
+export default function LandingPage({ onAnalyze, onCompare, error }) {
+  const [mode, setMode] = useState('single'); // 'single' or 'compare'
   const [company, setCompany] = useState('');
+  const [companyB, setCompanyB] = useState('');
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
@@ -20,9 +22,13 @@ export default function LandingPage({ onAnalyze, error }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (company.trim()) {
+    if (mode === 'single' && company.trim()) {
       saveToHistory(company.trim());
       onAnalyze(company.trim());
+    } else if (mode === 'compare' && company.trim() && companyB.trim()) {
+      const term = `${company.trim()} vs ${companyB.trim()}`;
+      saveToHistory(term);
+      onCompare(company.trim(), companyB.trim());
     }
   };
 
@@ -43,30 +49,71 @@ export default function LandingPage({ onAnalyze, error }) {
           Instantly generate comprehensive investment reports, SWOT analyses, and risk assessments for any public company using advanced AI.
         </p>
 
-        <form onSubmit={handleSubmit} className="max-w-xl mx-auto w-full relative mt-8">
+        {/* Mode Toggle */}
+        <div className="flex justify-center mt-6">
+          <div className="bg-surface border border-gray-700 rounded-full p-1 flex">
+            <button
+              onClick={() => setMode('single')}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${mode === 'single' ? 'bg-primary text-white' : 'text-gray-400 hover:text-gray-200'}`}
+            >
+              Single Analysis
+            </button>
+            <button
+              onClick={() => setMode('compare')}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${mode === 'compare' ? 'bg-primary text-white' : 'text-gray-400 hover:text-gray-200'}`}
+            >
+              <GitCompare size={14} /> Compare
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="max-w-xl mx-auto w-full relative mt-4">
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
-            <div className="relative flex items-center bg-surface border border-gray-700 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="pl-4 text-gray-400">
-                <Search size={24} />
+            <div className="relative flex flex-col sm:flex-row items-center bg-surface border border-gray-700 rounded-2xl overflow-hidden shadow-2xl p-2 gap-2">
+              <div className="flex-1 flex items-center w-full bg-background rounded-xl border border-gray-700">
+                <div className="pl-4 text-gray-400">
+                  <Search size={20} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Company A (e.g. Tesla)"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className="w-full bg-transparent text-white px-3 py-4 outline-none text-base placeholder-gray-500"
+                  required
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Enter company name (e.g. Tesla, Apple)..."
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className="w-full bg-transparent text-white px-4 py-5 outline-none text-lg placeholder-gray-500"
-                required
-              />
+
+              {mode === 'compare' && (
+                <>
+                  <div className="text-gray-500 font-bold px-2">VS</div>
+                  <div className="flex-1 flex items-center w-full bg-background rounded-xl border border-gray-700">
+                    <div className="pl-4 text-gray-400">
+                      <Search size={20} />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Company B"
+                      value={companyB}
+                      onChange={(e) => setCompanyB(e.target.value)}
+                      className="w-full bg-transparent text-white px-3 py-4 outline-none text-base placeholder-gray-500"
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
               <button 
                 type="submit" 
-                className="btn-primary m-2 h-auto py-3 whitespace-nowrap"
-                disabled={!company.trim()}
+                className="btn-primary w-full sm:w-auto h-auto py-4 px-6 whitespace-nowrap rounded-xl"
+                disabled={mode === 'single' ? !company.trim() : (!company.trim() || !companyB.trim())}
               >
-                Analyze
+                {mode === 'single' ? 'Analyze' : 'Compare'}
               </button>
             </div>
           </div>
+          
           {error && (
             <p className="text-red-400 mt-3 text-sm">{error}</p>
           )}
@@ -81,9 +128,18 @@ export default function LandingPage({ onAnalyze, error }) {
                   key={i}
                   type="button"
                   onClick={() => {
-                    setCompany(h);
+                    if (h.includes(' vs ')) {
+                      const [a, b] = h.split(' vs ');
+                      setMode('compare');
+                      setCompany(a);
+                      setCompanyB(b);
+                      onCompare(a, b);
+                    } else {
+                      setMode('single');
+                      setCompany(h);
+                      onAnalyze(h);
+                    }
                     saveToHistory(h);
-                    onAnalyze(h);
                   }}
                   className="px-3 py-1 text-sm bg-gray-800/50 hover:bg-gray-700 border border-gray-700 rounded-full transition-colors"
                 >
