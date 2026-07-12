@@ -1,6 +1,7 @@
 import { runAnalysisWorkflow } from '../langchain/workflow.js';
 import { runChatWorkflow } from '../langchain/chatWorkflow.js';
 import { runCompareWorkflow } from '../langchain/compareWorkflow.js';
+import { getCachedReport, setCachedReport, withDeduplication } from '../utils/cache.js';
 
 export const analyzeCompany = async (req, res, next) => {
   try {
@@ -10,12 +11,26 @@ export const analyzeCompany = async (req, res, next) => {
       return res.status(400).json({ error: 'Company name is required' });
     }
 
-    // Run the LangChain AI workflow
-    const report = await runAnalysisWorkflow(company);
+    const cachedReport = getCachedReport(company);
+    if (cachedReport) {
+      return res.json(cachedReport);
+    }
+
+    const report = await withDeduplication(company, async () => {
+      const result = await runAnalysisWorkflow(company);
+      setCachedReport(company, result);
+      return result;
+    });
 
     res.json(report);
   } catch (error) {
     console.error('Error analyzing company:', error);
+    if (error.message && (error.message.includes("429") || error.message.includes("Rate") || error.message.includes("quota") || error.message.includes("too quickly"))) {
+      return res.status(429).json({
+        error: "AI service is temporarily busy.",
+        message: "Please try again in a minute."
+      });
+    }
     next(error);
   }
 };

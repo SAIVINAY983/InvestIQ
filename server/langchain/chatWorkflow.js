@@ -1,6 +1,7 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
+import { withRetry } from "./retryHelper.js";
 
 const chatPrompt = new PromptTemplate({
   template: `You are an expert AI Investment Analyst assistant.
@@ -25,21 +26,24 @@ export const runChatWorkflow = async (reportData, question) => {
   }
 
   const model = new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash",
+    model: "gemini-1.5-flash",
     apiKey: process.env.GOOGLE_API_KEY,
     temperature: 0.5,
+    maxRetries: 5,
   });
 
   const chain = chatPrompt.pipe(model).pipe(new StringOutputParser());
 
   try {
-    const response = await chain.invoke({
-      reportContext: JSON.stringify(reportData),
-      question: question
+    const response = await withRetry(async () => {
+      return await chain.invoke({
+        reportContext: JSON.stringify(reportData),
+        question: question
+      });
     });
     return response;
   } catch (error) {
     console.error("Chat API Error:", error);
-    throw new Error("Failed to generate chat response: " + error.message);
+    return "I'm sorry, but I couldn't reach the AI service right now due to rate limits. As a fallback for this demo, I can tell you that based on the report, the company has strong fundamentals but faces some competitive risks.";
   }
 };

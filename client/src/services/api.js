@@ -6,7 +6,7 @@ const API_URL = 'http://localhost:5000/api';
 export const analyzeCompany = async (companyName) => {
   try {
     const response = await axios.post(`${API_URL}/analyze`, { company: companyName }, {
-      timeout: 90000 // 90 second timeout
+      timeout: 300000 // 5 minute timeout
     });
     return response.data;
   } catch (error) {
@@ -20,7 +20,7 @@ export const analyzeCompany = async (companyName) => {
 export const sendChatMessage = async (reportData, question) => {
   try {
     const response = await axios.post(`${API_URL}/chat`, { reportData, question }, {
-      timeout: 30000
+      timeout: 120000 // 2 minute timeout
     });
     return response.data;
   } catch (error) {
@@ -31,7 +31,7 @@ export const sendChatMessage = async (reportData, question) => {
 export const compareCompanies = async (companyA, companyB) => {
   try {
     const response = await axios.post(`${API_URL}/compare`, { companyA, companyB }, {
-      timeout: 120000 // 120 second timeout for comparison
+      timeout: 300000 // 5 minute timeout
     });
     return response.data;
   } catch (error) {
