@@ -1,5 +1,7 @@
 # InvestIQ – AI Investment Research Agent
 
+🚀 **Live Demo:** [https://invest-iq-peach.vercel.app](https://invest-iq-peach.vercel.app)
+
 An AI-powered investment research platform that automatically gathers financial data, company information, and latest news, then leverages LangChain and Gemini AI to generate a comprehensive investment report (SWOT analysis, risk assessment, and Buy/Hold/Pass recommendations).
 
 ## Features
